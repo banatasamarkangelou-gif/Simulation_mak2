@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PARTPOINT - Parts Finder</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Animations */
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .animated-text {
+            background: linear-gradient(90deg, #3b82f6, #06b6d4, #3b82f6);
+            background-size: 200% 200%;
+            animation: gradientShift 4s ease infinite;
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); }
+        .glow-active:active { transform: scale(0.95); box-shadow: 0 0 15px rgba(59, 130, 246, 0.6); }
+        .details-anim { transition: all 0.3s ease; }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen p-4">
+
+    <div class="max-w-md mx-auto">
+        <div class="text-center mb-8">
+            <h1 class="text-5xl font-black animated-text tracking-tighter">PARTPOINT</h1>
+            <p class="text-slate-500 text-xs mt-2 uppercase tracking-[0.2em]">Master Parts Database</p>
+        </div>
+        
+        <div class="space-y-3 mb-8">
+            <input id="brand" type="text" placeholder="Motorcycle Brand" 
+                class="w-full bg-slate-900 border border-slate-700 p-4 rounded-xl focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all">
+            <input id="model" type="text" placeholder="Model Number" 
+                class="w-full bg-slate-900 border border-slate-700 p-4 rounded-xl focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all">
+        </div>
+
+        <div id="parts-container" class="space-y-3"></div>
+    </div>
+
+    <script>
+        const partsData = {
+            "1. Power Unit": [
+                "Cylinder Head", "Intake Valves", "Exhaust Valves", "Valve Springs", 
+                "Retainers", "Camshafts", "Rocker Arms", "Followers", "Timing Chain", 
+                "Sprockets", "Cylinder/Liner", "Piston", "Piston Rings", "Wrist Pin", 
+                "Crankshaft", "Connecting Rod", "Crankcase", "Main Bearings", 
+                "Gaskets & Seals", "Engine Mounts", "Oil Sump"
+            ],
+            "2. Fuel & Injection": [
+                "Fuel Tank", "Fuel Pump", "Fuel Injectors", "Throttle Body", 
+                "Carburetor", "Fuel Filter", "Fuel Pressure Regulator", "Fuel Lines"
+            ],
+            "3. Air Intake": [
+                "Air Filter", "Air Box", "Intake Duct", "Throttle Valve", "Intake Manifold"
+            ],
+            "4. Exhaust System": [
+                "Exhaust Header", "Mid-pipe", "Muffler/Silencer", "Catalytic Converter", "Oxygen (O2) Sensor"
+            ],
+            "5. Electrical System": [
+                "Battery", "Alternator/Stator", "Regulator-Rectifier", "ECU", "CDI", 
+                "Ignition Coil", "Spark Plug", "Wiring Harness", "Relays", "Fuses", 
+                "Sensors (TPS, Crank, Temp)", "Headlight", "Tail Light", "Turn Signals", "Instrument Cluster"
+            ],
+            "6. Transmission": [
+                "Clutch Basket", "Friction Plates", "Steel Plates", "Clutch Springs", 
+                "Gear Sets", "Shift Drum", "Shift Forks", "Chain", "Front Sprocket", 
+                "Rear Sprocket", "Chain Tensioner"
+            ],
+            "7. Chassis / Frame": [
+                "Main Frame", "Subframe", "Engine Cradle", "Mounting Brackets"
+            ],
+            "8. Suspension": [
+                "Fork Tubes", "Fork Springs", "Fork Oil Seals", 
+                "Shock Absorber", "Monoshock", "Linkage System"
+            ],
+            "9. Wheels & Tires": [
+                "Front Wheel", "Rear Wheel", "Rims", "Tires", 
+                "Wheel Hub", "Spokes", "Wheel Bearings", "Valve Stems"
+            ],
+            "10. Braking System": [
+                "Front Disc Rotor", "Front Caliper", "Front Brake Pads", 
+                "Rear Disc/Drum", "Brake Shoes", "Master Cylinder", 
+                "Brake Fluid Reservoir", "Brake Lines/Hoses", "ABS Module", "Wheel Speed Sensors"
+            ],
+            "11. Control System": [
+                "Handlebars", "Throttle Grip", "Clutch Lever", "Brake Lever", 
+                "Gear Shifter", "Rear Brake Pedal", "Foot Pegs"
+            ],
+            "12. Cooling System": [
+                "Radiator", "Cooling Fan", "Thermostat", "Coolant Hoses", 
+                "Water Pump", "Cooling Fins"
+            ],
+            "13. Lubrication System": [
+                "Engine Oil", "Oil Pump", "Oil Filter", "Oil Passages", "Oil Cooler"
+            ],
+            "14. Body & Exterior": [
+                "Fairings/Panels", "Fuel Tank Cover", "Seat", "Side Covers", 
+                "Front Fender", "Rear Fender", "Windshield"
+            ],
+            "15. Safety & Security": [
+                "Ignition Switch", "Steering Lock", "Side Stand Switch", "Engine Kill Switch"
+            ],
+            "16. Accessories": [
+                "Crash Guards", "Luggage Racks", "Top Box", "Phone Holder", "USB Charger", "Auxiliary Lights"
+            ]
+        };
+
+        const container = document.getElementById('parts-container');
+
+        // Build the Interface
+        for (const category in partsData) {
+            const section = document.createElement('details');
+            section.className = "group glass rounded-xl border border-slate-700 overflow-hidden details-anim";
+            
+            section.innerHTML = `
+                <summary class="font-bold cursor-pointer p-5 outline-none flex justify-between items-center hover:bg-slate-800 transition-colors">
+                    ${category}
+                    <span class="text-blue-500 group-open:rotate-180 transition-transform">▼</span>
+                </summary>
+                <div class="p-2 space-y-1 border-t border-slate-700 bg-slate-950/50">
+                    ${partsData[category].map(part => `
+                        <div class="flex justify-between items-center p-3 hover:bg-blue-900/20 rounded-lg transition-all">
+                            <span class="text-slate-300 text-sm font-medium">${part}</span>
+                            <button onclick="searchPart('${part}')" 
+                                class="glow-active bg-blue-600 text-white text-[10px] px-3 py-1.5 rounded-md font-bold uppercase tracking-wider transition-all">
+                                VIEW
+                            </button>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            container.appendChild(section);
+        }
+
+        function searchPart(partName) {
+            const brand = document.getElementById('brand').value;
+            const model = document.getElementById('model').value;
+
+            if (!brand || !model) {
+                alert("Please enter the Brand and Model at the top!");
+                return;
+            }
+
+            // The Search URL
+            const query = `${brand} ${model} ${partName} OEM parts diagram`;
+            const url = `https://www.google.com/search?tbm=isch&q=${encodeURIComponent(query)}`;
+            window.open(url, '_blank');
+        }
+    </script>
+</body>
+</html>
